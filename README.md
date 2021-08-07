@@ -11,7 +11,7 @@ Requires python3.5 or newer. You can grab python3.5.2 from https://www.python.or
 
 to install required modules, run:
 ```
-python3.5 -m pip install livestreamer bs4 lxml gevent
+python3.5 -m pip install streamlink bs4 lxml gevent
 ```
 
 
