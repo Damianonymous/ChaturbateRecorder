@@ -8,6 +8,8 @@ import streamlink
 import subprocess
 import queue
 import requests
+import urllib.request
+import json 
 
 if os.name == 'nt':
     import ctypes
@@ -54,8 +56,11 @@ def postProcess():
         filename = os.path.split(path)[-1]
         directory = os.path.dirname(path)
         file = os.path.splitext(filename)[0]
-        subprocess.call(setting['postProcessingCommand'].split() + [path, filename, directory, model,  file, 'cam4'])
-
+        postprocessingcmd = setting['postProcessingCommand'][1:-1].split()
+        subprocess.run(setting['postProcessingCommand'][1:-1].split() + [path, filename, directory, model,  file, 'chaturbate'])
+        with open('log.log', 'a+') as f:
+            f.write(f'\n{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")} PostProcessing started: {file}')
+            
 class Modelo(threading.Thread):
     def __init__(self, modelo):
         threading.Thread.__init__(self)
@@ -124,15 +129,18 @@ class Modelo(threading.Thread):
 
     def isOnline(self):
         try:
-            resp = requests.get(f'https://chaturbate.com/api/chatvideocontext/{self.modelo}/')
-            hls_url = ''
-            if 'hls_source' in resp.json():
-                hls_url = resp.json()['hls_source']
-            if len(hls_url):
-                return hls_url
-            else:
-                return False
-        except:
+            if list(filter(lambda x:x["username"]==self.modelo,AddModelsThread.ctbOnlineModels)):
+                resp = requests.get(f'https://chaturbate.com/api/chatvideocontext/{self.modelo}/')
+                hls_url = ''
+                if 'hls_source' in resp.json():
+                    hls_url = resp.json()['hls_source']
+                if len(hls_url) and hls_url != None:
+                    return hls_url
+                else:
+                    return False
+        except Exception as e:
+            with open('log.log', 'a+') as f:
+                f.write(f'\n{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")} EXCEPTION: {e}\n')
             return False
 
     def stop(self):
@@ -172,6 +180,8 @@ class AddModelsThread(threading.Thread):
         self.wanted = (x for x in lines if x)
         self.lock.acquire()
         aux = []
+        with urllib.request.urlopen("https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=P3YWn") as url:
+            AddModelsThread.ctbOnlineModels = json.load(url)                                
         for model in self.wanted:
             model = model.lower()
             if model in aux:
