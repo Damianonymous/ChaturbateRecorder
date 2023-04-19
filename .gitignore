@@ -1,0 +1,8 @@
+__pycache__
+config.conf*
+misc
+logs/*
+.fuse_hidden*
+.vscode
+*.log
+*.code-workspace

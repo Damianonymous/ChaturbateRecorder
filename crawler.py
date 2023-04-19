@@ -1,22 +1,24 @@
-import requests, configparser, sys, pickle, os
+import requests, sys, pickle, os
 from bs4 import BeautifulSoup
+from queue import Queue
+from threading import Thread
 
+import config
 
+site = 'https://chaturbate.com/'
+
+settings = config.readConfig()
+wishlist = settings['wishlist']
+username = settings['username']
+password = settings['password']
 
 followed = []
-
-Config = configparser.ConfigParser()
-Config.read(sys.path[0] + "/config.conf")
-wishlist = Config.get('paths', 'wishlist')
-username = Config.get('login', 'username')
-password = Config.get('login', 'password')
-
 
 def login():
     s.headers = {
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
-        'referer': 'https://chaturbate.com/',
-        'origin': 'https://chaturbate.com',
+        'referer': site,
+        'origin': site.rstrip('/'),
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'accept-encoding': 'gzip, deflate, br',
         'accept-language': 'en-US,en;q=0.8',
@@ -27,11 +29,11 @@ def login():
 
 
     data = {'username': username, 'password': password, 'next': ''}
-    result = s.get("https://chaturbate.com/")
+    result = s.get(site)
     soup = BeautifulSoup(result.text, "html.parser")
     data['csrfmiddlewaretoken'] = soup.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
 
-    result = s.post('https://chaturbate.com/auth/login/?next=/', data=data, cookies=result.cookies)
+    result = s.post(f'{site}auth/login/?next=/', data=data, cookies=result.cookies)
     if not checkLogin(result):
         print('login failed - please check your username and password is set correctly in the config file.')
         exit()
@@ -46,11 +48,25 @@ def checkLogin(result):
     else:
         return True
 
+def rememberSession():
+    with open (sys.path[0] + "/" + username + '.pickle', 'wb') as f:
+        pickle.dump(s, f)
+
 def getModels():
-    print("getting followed models...")
+    q = Queue()
+    workers = []
+    while not q.empty():
+        for i in range(10):
+            t = Thread(target=getOnlineModels)
+            workers.append(t)
+            t.start()
+        for t in workers:
+            t.join()
+
+def getOnlineModels():
     page = 1
     while True:
-        result = s.get('https://chaturbate.com/followed-cams/?keywords=&page={}'.format(page))
+        result = s.get(f'{site}followed-cams/?keywords=&page={page}')
         soup = BeautifulSoup(result.text, 'lxml')
         LIST = soup.findAll('ul', {'class': 'list'})[0]
         models = LIST.find_all('div', {'class': 'title'})
@@ -70,19 +86,11 @@ if __name__ == '__main__':
             s = pickle.load(f)
     else:
         s = requests.session()
-    result = s.get('https://chaturbate.com/')
+    result = s.get(site)
     if not checkLogin(result):
         login()
+
     getModels()
     print('{} followed models'.format(len(set(followed))))
-    f = open(wishlist, 'r')
-    wanted = list(set(f.readlines()))
-    wanted = [m.strip('\n').split('chaturbate.com/')[-1].lower().strip().replace('/', '') for m in wanted]
-    print('{} models currently in the wanted list'.format(len(wanted)))
-    followed.extend(wanted)
-    f= open(wishlist, 'w')
-    for model in set(followed):
-        f.write(model + '\n')
-    print('{} models have been added to the wanted list'.format(len(set(followed)) - len(set(wanted))))
-    with open (sys.path[0] + "/" +username + '.pickle', 'wb') as f:
-        pickle.dump(s, f)
+    
+    
