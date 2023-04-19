@@ -1,6 +1,6 @@
 # ChaturbateRecorder
 
-All credits to @beaston02 and @ahsand97
+All credits to @beaston02, @ahsand97 and @Damianonymous
 
 This is a script to automate the recording of public webcam shows from chaturbate.com.
 
