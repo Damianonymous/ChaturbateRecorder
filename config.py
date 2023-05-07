@@ -14,17 +14,13 @@ def readConfig():
         'interval': int(config.get('settings', 'check_online_interval')),
         'max_duration': int(config.get('settings', 'max_duration_mins')),
         'postProcessingCommand': config.get('settings', 'postProcessingCommand'),
-
-        'username': config.get('login', 'username'),
-        'password': config.get('login', 'password'),
-        'access_token': config.get('login', 'access_token'),
     }
     try:
         settings['postProcessingThreads'] = int(config.get('settings', 'postProcessingThreads'))
     except ValueError:
         if settings['postProcessingCommand'] and not settings['postProcessingThreads']:
             settings['postProcessingThreads'] = 1
-    
+
     if not os.path.exists(f'{settings["save_directory"]}'):
         os.makedirs(f'{settings["save_directory"]}')
 

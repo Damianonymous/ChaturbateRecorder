@@ -19,7 +19,7 @@ directory_structure = {path}/{model}/{model}_{year}{month}{day}_{hour}{minutes}{
 # if this is left empty, the videos wll remain in the same directory they were originally saved to
 # This path should be to a directory, not a filename! so do not include the filename portion, only the directory.
 
-completed_directory = 
+completed_directory =
 
 
 [settings]
@@ -53,14 +53,9 @@ genders = female, couple
 # This script will be ran on the files in the "save_directory" prior to it being moved to its "completed_directory".
 # The moving of the files will not take place if a post processing script is ran, so if you want to move it once it is completed, do so through commands in the script.
 
-postProcessingCommand = 
+postProcessingCommand =
 
 # Because depending on what the post processing script does, it may be demanding on the system.
 # Set the maximum number of concurrent post processing scripts you would like to be ran at one time.
 
 postProcessingThreads = 2
-
-[login]
-username = 
-password = 
-access_token =
